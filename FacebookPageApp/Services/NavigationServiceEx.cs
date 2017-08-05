@@ -63,7 +63,8 @@ namespace FacebookPageApp.Services
             {
                 if (_pages.ContainsKey(key))
                 {
-                    throw new ArgumentException($"The key {key} is already configured in NavigationService");
+                    _pages.Remove(key);
+                    //throw new ArgumentException($"The key {key} is already configured in NavigationService");
                 }
 
                 if (_pages.Any(p => p.Value == pageType))

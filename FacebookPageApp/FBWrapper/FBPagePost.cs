@@ -27,6 +27,7 @@ namespace FacebookPageApp.FBWrapper
         private long _lifetimeImpressions;
         private long _lifetimeUniqueUsers;
         private bool _isFlyoutOpen;
+        private string _imageSrc;
         public ICommand DeletePostCommand { get; private set; }
         public ICommand EditPostCommand { get; private set; }
         public ICommand CancelEditCommand { get; private set; }
@@ -43,9 +44,20 @@ namespace FacebookPageApp.FBWrapper
         public string Link { get => _link; set => Set(ref _link, value); }
         public string Desription { get => _desription; set => Set(ref _desription, value); }
         public long Scheduled_publish_time { get => _scheduled_publish_time; set => Set(ref _scheduled_publish_time, value); }
-        private DateTime ScheduledPublishDateTime { get => new DateTime(1970, 1, 1).AddSeconds(Scheduled_publish_time).ToLocalTime(); }
+        public DateTime ScheduledPublishDateTime { get => new DateTime(1970, 1, 1).AddSeconds(Scheduled_publish_time).ToLocalTime(); }
+        public String ScheduledPublishDateTimeFormatted
+        {
+            get
+            {
+                if (Scheduled_publish_time != 0)
+                    return $"Scheduled Time: {ScheduledPublishDateTime.ToString("dd-MMM-yyyy hh:mm")}";
+                return String.Empty;
+            }
+        }
         public long LifetimeImpressions { get => _lifetimeImpressions; set => Set(ref _lifetimeImpressions, value); }
         public long LifetimeUniqueUsers { get => _lifetimeUniqueUsers; set => Set(ref _lifetimeUniqueUsers, value); }
+
+        public string ImageSrc { get => _imageSrc; set => Set(ref _imageSrc, value); }
 
         public static FBJsonClassFactory Factory = new FBJsonClassFactory((JsonText) => Json.ToObject<FBPagePost>(JsonText));
 
@@ -61,6 +73,7 @@ namespace FacebookPageApp.FBWrapper
             {
                 EditedMessage = Message;
             });
+            ImageSrc = "ms-appx:///Assets/blank.png";
         }
 
         private async void OnDelete(PostViewModel viewModel)

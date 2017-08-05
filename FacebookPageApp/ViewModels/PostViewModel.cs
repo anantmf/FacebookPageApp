@@ -12,6 +12,10 @@ using System.Linq;
 using Windows.UI.Xaml.Controls;
 using System.Windows.Input;
 using GalaSoft.MvvmLight.Command;
+using Windows.UI.Popups;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using Windows.Storage.Streams;
 
 namespace FacebookPageApp.ViewModels
 {
@@ -20,11 +24,16 @@ namespace FacebookPageApp.ViewModels
         public ICommand PublishCommand { get; private set; }
         public ICommand NoPublishCommand { get; private set; }
         public ICommand SchedulePostCommand { get; private set; }
+        public ICommand AttachImageCommand { get; private set; }
+
+
+        private StorageFile _selectedPhoto;
 
         private DateTime _scheduledDate;
         private DateTime _scheduledTime;
         public DateTime ScheduledDate { get => _scheduledDate; set => Set(ref _scheduledDate, value); }
         public DateTime ScheduledTime { get => _scheduledTime; set => Set(ref _scheduledTime, value); }
+        public StorageFile SelectedPhoto { get => _selectedPhoto; set => Set(ref _selectedPhoto, value); }
 
         private FBPage _page;
 
@@ -49,6 +58,22 @@ namespace FacebookPageApp.ViewModels
             PublishCommand = new RelayCommand<EventArgs>(OnPublish);
             NoPublishCommand = new RelayCommand<EventArgs>(OnNoPublish);
             SchedulePostCommand = new RelayCommand<EventArgs>(OnSchedulePost);
+            AttachImageCommand = new RelayCommand<EventArgs>(OnAttachImage);
+        }
+
+        private async void OnAttachImage(EventArgs args)
+        {
+            var fop = new FileOpenPicker()
+            {
+                ViewMode = PickerViewMode.Thumbnail,
+                SuggestedStartLocation = PickerLocationId.PicturesLibrary,
+            };
+            fop.FileTypeFilter.Add(".jpg");
+            fop.FileTypeFilter.Add(".png");
+            StorageFile selectedPhoto = await fop.PickSingleFileAsync();
+            SelectedPhoto = selectedPhoto;
+            // Create media stream
+
         }
 
         private async void OnPublish(EventArgs obj)
@@ -69,6 +94,13 @@ namespace FacebookPageApp.ViewModels
 
         internal async Task EditPost(FBPagePost post)
         {
+            if (String.IsNullOrWhiteSpace(post.EditedMessage))
+            {
+                var messageDialog = new MessageDialog($"Cannot publish blank message, please enter message.");
+                await messageDialog.ShowAsync();
+                return;
+            }
+
             Page.IsProcessing = true;
 
             FBSession.ActiveSession.AccessTokenData = new FBAccessTokenData(Page.Access_Token, DateTimeOffset.MaxValue);
@@ -78,7 +110,7 @@ namespace FacebookPageApp.ViewModels
             PropertySet parameters = new PropertySet();
             post.EditedMessage = post.EditedMessage.Replace("\r\n", "\r");
             post.EditedMessage = post.EditedMessage.Replace("\r", "\r\n");
-            parameters.Add("message", post.Message);
+            parameters.Add("message", post.EditedMessage);
 
             var singleValue = new winsdkfb.Graph.FBSingleValue(path, parameters, factory);
             try
@@ -137,10 +169,25 @@ namespace FacebookPageApp.ViewModels
 
         public async Task Publish(bool published = true, string scheduledTime = null)
         {
+            if (String.IsNullOrWhiteSpace(Page.NewPost) && this.SelectedPhoto == null)
+            {
+                var messageDialog = new MessageDialog($"Cannot publish blank message, please enter message or attach an image");
+                await messageDialog.ShowAsync();
+                return;
+            }
+            if (String.IsNullOrWhiteSpace(Page.NewPost))
+            {
+                Page.NewPost = String.Empty;
+            }
             Page.IsProcessing = true;
 
             FBSession.ActiveSession.AccessTokenData = new FBAccessTokenData(Page.Access_Token, DateTimeOffset.MaxValue);
-            string path = "/" + Page.Id + "/feed";
+            string photoOrFeed = "feed";
+            if (SelectedPhoto != null)
+            {
+                photoOrFeed = "photos";
+            }
+            string path = $"/{Page.Id}/{photoOrFeed}";
 
             PropertySet parameters = new PropertySet();
             Page.NewPost = Page.NewPost.Replace("\r", "\r\n");
@@ -148,6 +195,57 @@ namespace FacebookPageApp.ViewModels
             parameters.Add("published", published.ToString().ToLower());
             if (scheduledTime != null)
                 parameters.Add("scheduled_publish_time", scheduledTime);
+
+            if (SelectedPhoto != null)
+            {
+                IRandomAccessStreamWithContentType stream = await SelectedPhoto.OpenReadAsync();
+                FBMediaStream fbStream = new FBMediaStream(SelectedPhoto.Name, stream);
+                parameters.Add("source", fbStream);
+                parameters.Add("caption", Page.NewPost);
+            }
+
+            var factory = new FBJsonClassFactory(s => s);
+
+            var singleValue = new winsdkfb.Graph.FBSingleValue(path, parameters, factory);
+            try
+            {
+                var result = await singleValue.PostAsync();
+                if (result.Succeeded)
+                {
+                    Page.NewPost = String.Empty;
+                    SelectedPhoto = null;
+                    await RefreshFeeds();
+                }
+                else
+                {
+                    FBErrorHandler.HandleError(result);
+                }
+            }
+            catch(Exception ex)
+            {
+                FBErrorHandler.HandleError(new FBResult(ex));
+            }
+            FBSession.ActiveSession.AccessTokenData = new FBAccessTokenData(FBGlobalScope.User.AccessToken, DateTimeOffset.MaxValue);
+
+            Page.IsProcessing = false;
+        }
+
+        public async Task UploadPhoto()
+        {
+
+            Page.IsProcessing = true;
+
+            FBSession.ActiveSession.AccessTokenData = new FBAccessTokenData(Page.Access_Token, DateTimeOffset.MaxValue);
+            string path = "/" + Page.Id + "/photos";
+
+            PropertySet parameters = new PropertySet();
+            Page.NewPost = Page.NewPost.Replace("\r", "\r\n");
+            if (SelectedPhoto != null)
+            {
+                IRandomAccessStreamWithContentType stream = await SelectedPhoto.OpenReadAsync();
+                FBMediaStream fbStream = new FBMediaStream(SelectedPhoto.Name, stream);
+                parameters.Add("source", fbStream);
+            }
 
             var factory = new FBJsonClassFactory(s => s);
 
@@ -165,7 +263,7 @@ namespace FacebookPageApp.ViewModels
                     FBErrorHandler.HandleError(result);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 FBErrorHandler.HandleError(new FBResult(ex));
             }
@@ -173,6 +271,7 @@ namespace FacebookPageApp.ViewModels
 
             Page.IsProcessing = false;
         }
+    
 
         public async Task RefreshFeeds()
         {
@@ -235,56 +334,39 @@ namespace FacebookPageApp.ViewModels
 
         private async Task GetAttachmentsForPost(FBPagePost p)
         {
-            return;
-            //string graphPath = $"/{p.Id}/attachments";
-            //var fbPosts = new winsdkfb.Graph.FBPaginatedArray(graphPath, null, FBWrapper.FBInsights.Factory);
-            //FBResult result = null;
-            //do
-            //{
-            //    if (result == null)
-            //        result = await fbPosts.FirstAsync();
-            //    else
-            //        result = await fbPosts.NextAsync();
-            //    if (result.Succeeded)
-            //    {
-            //        IReadOnlyList<object> posts = (IReadOnlyList<object>)result.Object;
-            //        foreach (var i in posts)
-            //        {
-            //            FBInsights post = (FBInsights)i;
-            //            if (post != null)
-            //            {
-            //                long value = 0;
-            //                if (post.Values.Any())
-            //                {
-            //                    value = post.Values[0].Value;
-            //                }
-            //                await _view.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
-            //                {
-            //                    switch (post.Name)
-            //                    {
-            //                        case "post_impressions":
-            //                            {
-            //                                p.LifetimeImpressions = value;
-            //                                break;
-            //                            }
-            //                        case "post_impressions_unique":
-            //                            {
-            //                                p.LifetimeUniqueUsers = value;
-            //                                break;
-            //                            }
+            string graphPath = $"/{p.Id}/attachments";
+            var fbAttachments = new winsdkfb.Graph.FBPaginatedArray(graphPath, null, FBWrapper.FBAttachments.Factory);
+            FBResult result = null;
+            do
+            {
+                if (result == null)
+                    result = await fbAttachments.FirstAsync();
+                else
+                    result = await fbAttachments.NextAsync();
+                if (result.Succeeded)
+                {
+                    IReadOnlyList<object> attachments = (IReadOnlyList<object>)result.Object;
+                    foreach (var i in attachments)
+                    {
+                        var attachment = (FBAttachments)i;
+                        if (attachment != null)
+                        {
+                            if (attachment.Media != null && attachment.Media.Image != null)
+                            {
+                                await _view.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                                {
+                                    p.ImageSrc = attachment.Media.Image.Src;
+                                });
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    FBErrorHandler.HandleError(result);
+                }
 
-            //                    }
-            //                });
-            //                Console.WriteLine(post);
-            //            }
-            //        }
-            //    }
-            //    else
-            //    {
-            //        FBErrorHandler.HandleError(result);
-            //    }
-
-            //} while (fbPosts.HasNext);
+            } while (fbAttachments.HasNext);
         }
 
         private async Task GetInsightsForPost(FBPagePost p)

@@ -120,6 +120,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Activation\ActivationHandler.cs" />
+    <Compile Include="FBWrapper\FBAttachments.cs" />
     <Compile Include="FBWrapper\FBBase.cs" />
     <Compile Include="FBWrapper\FBGlobalScope.cs" />
     <Compile Include="FBWrapper\FBInsights.cs" />
@@ -274,6 +275,7 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <Content Include="Assets\blank.png" />
     <Content Include="Assets\check.png" />
     <Content Include="Assets\cross.png" />
     <Content Include="Properties\Default.rd.xml" />

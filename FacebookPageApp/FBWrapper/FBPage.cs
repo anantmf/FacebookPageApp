@@ -29,7 +29,7 @@ namespace FacebookPageApp.FBWrapper
             set
             {
                 Set(ref _newPost, value);
-                PostActionEnabled = _newPost.Trim().Length > 0;
+                //PostActionEnabled = _newPost.Trim().Length > 0;
             }
         }
         public ObservableCollection<string> Perms { get => _perms; set => Set(ref _perms, value); }
@@ -42,6 +42,7 @@ namespace FacebookPageApp.FBWrapper
         public FBPage()
         {
             Posts = new ObservableCollection<FBPagePost>();
+            PostActionEnabled = true;
         }
 
     }

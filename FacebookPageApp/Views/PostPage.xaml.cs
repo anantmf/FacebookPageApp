@@ -1,6 +1,8 @@
 using FacebookPageApp.FBWrapper;
 using FacebookPageApp.ViewModels;
 using System;
+using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -46,6 +48,31 @@ namespace FacebookPageApp.Views
         }
     }
 
+    public class PhotoConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value != null)
+            {
+                var storageFile = value as StorageFile;
+
+                BitmapImage bitmapImage = new BitmapImage();
+                var task = storageFile.OpenAsync(FileAccessMode.Read);
+                task.AsTask().Wait();
+                var stream = (FileRandomAccessStream)task.GetResults();
+
+                bitmapImage.SetSource(stream);
+
+                return bitmapImage;
+            }
+            return null;
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            return null;
+        }
+    }
+
     public class PublishedValueConverter : IValueConverter
     {
 
@@ -85,5 +112,45 @@ namespace FacebookPageApp.Views
         }
     }
 
-    
+    public class ZeroLengthVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value != null)
+            {
+                var strValue = value.ToString().Trim().Replace("ms-appx:///Assets/blank.png", "");
+                if (!String.IsNullOrWhiteSpace(strValue))
+                    return Visibility.Visible;
+            }
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class PhotoVisibiliyConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value != null)
+            {
+                var storageFile = value as StorageFile;
+                if (storageFile == null)
+                    return Visibility.Collapsed;
+
+                return Visibility.Visible;
+            }
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+
 }
