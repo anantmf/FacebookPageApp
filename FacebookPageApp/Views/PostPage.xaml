@@ -31,7 +31,8 @@
                 <TextBlock Text="{x:Bind Is_published, Mode=OneWay, Converter={StaticResource PublishedConverter}}"  Margin="5"
                            Foreground="{x:Bind Is_published, Mode=OneWay, Converter={StaticResource PublishedColorConverter}}" />
                 <StackPanel Grid.Column="1" Orientation="Vertical" Margin="5">
-                    <TextBlock Text="{x:Bind ScheduledPublishDateTimeFormatted}" Visibility="{x:Bind ScheduledPublishDateTimeFormatted, Converter={StaticResource ZeroLengthVisibilityConverter}}" 
+                    <!--<TextBlock Text="{x:Bind Type, Mode=OneWay}" />-->
+                    <TextBlock Text="{x:Bind ScheduledPublishDateTimeFormatted, Mode=OneWay}" Visibility="{x:Bind ScheduledPublishDateTimeFormatted, Converter={StaticResource ZeroLengthVisibilityConverter}}" 
                                Foreground="Green"/>
 
                     <TextBlock  Grid.Column="1" x:Name="Text" Text="{x:Bind Message, Mode=OneWay}" TextWrapping="WrapWholeWords" VerticalAlignment="Top" HorizontalAlignment="Left"

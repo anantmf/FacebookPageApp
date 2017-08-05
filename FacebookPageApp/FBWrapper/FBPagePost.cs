@@ -28,6 +28,8 @@ namespace FacebookPageApp.FBWrapper
         private long _lifetimeUniqueUsers;
         private bool _isFlyoutOpen;
         private string _imageSrc;
+        private string _type;
+
         public ICommand DeletePostCommand { get; private set; }
         public ICommand EditPostCommand { get; private set; }
         public ICommand CancelEditCommand { get; private set; }
@@ -58,6 +60,8 @@ namespace FacebookPageApp.FBWrapper
         public long LifetimeUniqueUsers { get => _lifetimeUniqueUsers; set => Set(ref _lifetimeUniqueUsers, value); }
 
         public string ImageSrc { get => _imageSrc; set => Set(ref _imageSrc, value); }
+
+        public string Type { get => _type; set => Set(ref _type, value); }
 
         public static FBJsonClassFactory Factory = new FBJsonClassFactory((JsonText) => Json.ToObject<FBPagePost>(JsonText));
 

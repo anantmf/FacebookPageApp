@@ -356,6 +356,7 @@ namespace FacebookPageApp.ViewModels
                                 await _view.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
                                 {
                                     p.ImageSrc = attachment.Media.Image.Src;
+                                    p.Type = attachment.Type;
                                 });
                             }
                         }
