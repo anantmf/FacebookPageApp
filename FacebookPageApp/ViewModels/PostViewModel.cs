@@ -320,13 +320,18 @@ namespace FacebookPageApp.ViewModels
             FBSession.ActiveSession.AccessTokenData = new FBAccessTokenData(Page.Access_Token, DateTimeOffset.MaxValue);
             string path = "/" + Page.Id + "/feed";
 
-            //await Task.Factory.StartNew(() => {
-            Parallel.ForEach(Page.Posts, async p =>
-            {
-                await GetAttachmentsForPost(p);
-                await GetInsightsForPost(p);
+            var tasks = Page.Posts.Select(async p => await GetAttachmentsForPost(p)).ToArray();
+            var tasks2  = Page.Posts.Select(async p => await GetInsightsForPost(p)).ToArray();
+            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks2);
 
-            });
+            //await Task.Factory.StartNew(() => {
+            //Parallel.ForEach(Page.Posts, async p =>
+            //{
+            //    await GetAttachmentsForPost(p);
+            //    await GetInsightsForPost(p);
+
+            //});
 
             FBSession.ActiveSession.AccessTokenData = new FBAccessTokenData(FBGlobalScope.User.AccessToken, DateTimeOffset.MaxValue);
 

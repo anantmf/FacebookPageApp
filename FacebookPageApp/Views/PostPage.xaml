@@ -83,7 +83,9 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox Grid.Row="0" Text="{x:Bind EditedMessage, Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                    <TextBox Grid.Row="0" Text="{x:Bind EditedMessage, Mode=TwoWay}" 
+                                             Height="200" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             TextWrapping="Wrap" AcceptsReturn="True"/>
                                     <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="15">
                                         <Button Content="Confirm"  Margin="0, 0, 5, 0" Command="{x:Bind Path=EditPostCommand}" CommandParameter="{Binding ElementName=ContentArea, Path=DataContext}"/>
                                         <Button Content="Cancel"   Command="{x:Bind Path=CancelEditCommand}" CommandParameter="{Binding ElementName=ContentArea, Path=DataContext}"/>
@@ -130,13 +132,16 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBox Grid.Row="0" Text="{Binding Page.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="5" Visibility="Collapsed"/>
+            <TextBox Grid.Row="0" Text="{Binding Page.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                     Margin="5" Visibility="Collapsed"/>
             <Grid Grid.Row="1" Margin="5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <TextBox Grid.Row="0" Text="{Binding Page.NewPost, Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True" Height="140"/>
+                <TextBox Grid.Row="0" Text="{Binding Page.NewPost, Mode=TwoWay}" TextWrapping="Wrap" 
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         AcceptsReturn="True" Height="140"/>
                 <Grid Grid.Row="1" HorizontalAlignment="Stretch">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
