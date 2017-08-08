@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,8 +15,9 @@ namespace FacebookPageApp.Helpers
         {
             try
             {
-                var messageDialog = new MessageDialog($"Issue with connecting to Facebook service : {result.ErrorInfo.Message}");
-                await messageDialog.ShowAsync();
+                Debug.WriteLine($"Issue with connecting to Facebook service : {result.ErrorInfo.Message}");
+                //var messageDialog = new MessageDialog($"Issue with connecting to Facebook service : {result.ErrorInfo.Message}");
+                //await messageDialog.ShowAsync();
             }
             catch(Exception ex)
             { }
